@@ -1,0 +1,9 @@
+# Archivos y carpetas que no se deben subir a GitHub
+.vs/
+bin/
+obj/
+*.user
+*.suo
+*.log
+*.cache
+*.pdb
