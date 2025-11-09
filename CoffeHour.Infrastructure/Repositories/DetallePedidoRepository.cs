@@ -8,14 +8,20 @@ namespace CoffeHour.Infrastructure.Repositories
 {
     public class DetallePedidoRepository : BaseRepository<DetallesPedido>, IDetallePedidoRepository
     {
-    
-        private readonly CoffeeHourContext _context;
 
-        public DetallePedidoRepository(CoffeeHourContext context) : base(context) 
+        public DetallePedidoRepository(CoffeeHourContext context) : base(context)
         {
-            _context = context;
         }
 
+        public async Task<IEnumerable<DetallesPedido>> GetByPedidoIdAsync(int pedidoId)
+        {
+            return await _entities
+                .Where(d => d.IdPedido == pedidoId)
+                .Include(d => d.Producto)
+                .ToListAsync();
+        }
+
+        /*
         public async Task<IEnumerable<DetallesPedido>> GetAllAsync() =>
             await _context.DetallesPedido
                 .Include(d => d.Producto)
@@ -48,6 +54,8 @@ namespace CoffeHour.Infrastructure.Repositories
                 _context.DetallesPedido.Remove(detalle);
                 await _context.SaveChangesAsync();
             }
-        }
+        }*/
+
+
     }
 }

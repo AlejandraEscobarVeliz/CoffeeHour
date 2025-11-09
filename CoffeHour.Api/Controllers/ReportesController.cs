@@ -1,8 +1,9 @@
-﻿using CoffeeHour.Api.Responses;
+﻿// CoffeHour.Api/Controllers/ReportesController.cs
+using CoffeeHour.Api.Responses;
 using CoffeHour.Core.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
-namespace CoffeeHour.Api.Controllers
+namespace CoffeHour.Api.Controllers
 {
     [ApiController]
     [Route("api/coffee/[controller]")]
@@ -15,37 +16,21 @@ namespace CoffeeHour.Api.Controllers
             _unitOfWork = unitOfWork;
         }
 
+        /// <summary>
+        /// Obtiene el reporte de ventas diarias (Caso de Uso 3).
+        /// </summary>
         [HttpGet("ventas")]
         public async Task<IActionResult> GetVentasDiarias([FromQuery] DateTime fecha)
         {
-            var pedidos = await _unitOfWork.Pedidos.GetAllAsync();
-            var pedidosFiltrados = pedidos
-                .Where(p => p.Fecha.Date == fecha.Date && p.Estado.ToLower() == "entregado")
-                .ToList();
+            // ✅ Este método específico sí es async
+            var reporte = await _unitOfWork.Pedidos.GetDailySalesReportAsync(fecha);
 
-            if (!pedidosFiltrados.Any())
-                return NotFound(new ApiResponse<string>($"No existen ventas registradas para {fecha:yyyy-MM-dd}", false));
-
-            var totalVentas = pedidosFiltrados.Sum(p => p.Total);
-            var cantidadPedidos = pedidosFiltrados.Count;
-
-            var reporte = new
-            {
-                fecha = fecha.ToString("yyyy-MM-dd"),
-                totalVentas,
-                cantidadPedidos,
-                pedidos = pedidosFiltrados.Select(p => new
-                {
-                    p.Id,
-                    Cliente = p.IdCliente,
-                    p.Total,
-                    p.Estado
-                })
-            };
+            if (reporte.OrdersCount == 0)
+                return NotFound(new ApiResponse<string>(
+                    $"No existen ventas registradas para {fecha:yyyy-MM-dd}", false));
 
             return Ok(new ApiResponse<object>(reporte));
         }
     }
 }
-
 

@@ -1,60 +1,35 @@
-﻿using CoffeHour.Core.Entities;
+﻿// CoffeHour.Infrastructure/Repositories/PedidoRepository.cs
+using CoffeHour.Core.Entities;
 using CoffeHour.Core.Interfaces;
 using CoffeHour.Core.DTOs;
+using CoffeHour.Core.Exceptions;
 using CoffeHour.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
 namespace CoffeHour.Infrastructure.Repositories
 {
-    public class PedidoRepository :BaseRepository<Pedidos>, IPedidoRepository
+    public class PedidoRepository : BaseRepository<Pedidos>, IPedidoRepository
     {
-        private readonly CoffeeHourContext _context;
         public PedidoRepository(CoffeeHourContext context) : base(context) { }
 
-        public async Task<IEnumerable<Pedidos>> GetAllAsync() =>
-            await _context.Pedidos.Include(p => p.Cliente)
-                               .Include(p => p.DetallesPedido).ThenInclude(d => d.Producto)
-                               .ToListAsync();
-
-        public async Task<Pedidos?> GetByIdAsync(int id) =>
-            await _context.Pedidos.Include(p => p.Cliente)
-                              .Include(p => p.DetallesPedido).ThenInclude(d => d.Producto)
-                              .FirstOrDefaultAsync(p => p.Id == id);
-
-        public async Task AddAsync(Pedidos pedido)
-        {
-            _context.Pedidos.Add(pedido);
-            await _context.SaveChangesAsync();
-        }
-
-        public async Task UpdateAsync(Pedidos pedido)
-        {
-            _context.Pedidos.Update(pedido);
-            await _context.SaveChangesAsync();
-        }
-
-        public async Task DeleteAsync(int id)
-        {
-            var entity = await _context.Pedidos.FindAsync(id);
-            if (entity != null)
-            {
-                _context.Pedidos.Remove(entity);
-                await _context.SaveChangesAsync();
-            }
-        }
-
+        // ✅ Caso de Uso 1: Crear pedido con detalles
         public async Task<int> CreateOrderAsync(Pedidos pedido, IEnumerable<DetallesPedido> detalles)
         {
-            // Validaciones (mínimas)
             var detallesList = detalles?.ToList() ?? new List<DetallesPedido>();
-            if (!detallesList.Any()) throw new InvalidOperationException("El pedido debe tener al menos un detalle.");
 
-            // Recalcular subtotales a partir de precio actual
+            if (!detallesList.Any())
+                throw new BusinessException("El pedido debe tener al menos un detalle.", 400);
+
+            // Validar y calcular subtotales
             foreach (var det in detallesList)
             {
                 var producto = await _context.Productos.FindAsync(det.IdProducto);
-                if (producto == null) throw new InvalidOperationException($"Producto {det.IdProducto} no existe.");
-                if (det.Cantidad <= 0) throw new InvalidOperationException("Cantidad debe ser > 0.");
+                if (producto == null)
+                    throw new BusinessException($"Producto {det.IdProducto} no existe.", 404);
+
+                if (det.Cantidad <= 0)
+                    throw new BusinessException("Cantidad debe ser mayor a 0.", 400);
+
                 det.Subtotal = producto.Precio * det.Cantidad;
             }
 
@@ -63,44 +38,40 @@ namespace CoffeHour.Infrastructure.Repositories
             pedido.Fecha = DateTime.Now;
             pedido.DetallesPedido = detallesList;
 
-            // Guardar en transacción
-            using var tran = await _context.Database.BeginTransactionAsync();
-            try
-            {
-                _context.Pedidos.Add(pedido);
-                await _context.SaveChangesAsync();
-                await tran.CommitAsync();
-                return pedido.Id;
-            }
-            catch
-            {
-                await tran.RollbackAsync();
-                throw;
-            }
+            await AddAsync(pedido);
+            
+
+            return pedido.Id;
         }
 
+        // ✅ Caso de Uso 2: Cambiar estado
         public async Task<bool> ChangeOrderStatusAsync(int idPedido, string nuevoEstado)
         {
-            var pedido = await _context.Pedidos.FindAsync(idPedido);
+            var pedido = await GetByIdAsync(idPedido);
             if (pedido == null) return false;
 
             var transiciones = new Dictionary<string, string[]>
             {
                 { "Pendiente", new[] { "Preparando", "Cancelado" } },
                 { "Preparando", new[] { "Entregado", "Cancelado" } },
-                { "Entregado", new string[] { } }
+                { "Entregado", new string[] { } },
+                { "Cancelado", new string[] { } }
             };
 
             var actual = pedido.Estado ?? "Pendiente";
             if (actual == nuevoEstado) return true;
+
             if (!transiciones.ContainsKey(actual) || !transiciones[actual].Contains(nuevoEstado))
-                throw new InvalidOperationException($"No se puede cambiar de {actual} a {nuevoEstado}.");
+                throw new BusinessException($"No se puede cambiar de '{actual}' a '{nuevoEstado}'.", 400);
 
             pedido.Estado = nuevoEstado;
-            await _context.SaveChangesAsync();
+            Update(pedido);
+            // ❌ NO guardar aquí
+
             return true;
         }
 
+        // ✅ Caso de Uso 3: Reporte de ventas
         public async Task<SalesReportDTO> GetDailySalesReportAsync(DateTime fecha)
         {
             var inicio = fecha.Date;
@@ -118,19 +89,32 @@ namespace CoffeHour.Infrastructure.Repositories
             };
         }
 
-        public Task<Pedidos?> GetByIdWithDetailsAsync(int id)
+        // ✅ Métodos auxiliares
+        public async Task<Pedidos?> GetByIdWithDetailsAsync(int id)
         {
-            throw new NotImplementedException();
+            return await _context.Pedidos
+                .Include(p => p.Cliente)
+                .Include(p => p.DetallesPedido)
+                    .ThenInclude(d => d.Producto)
+                .FirstOrDefaultAsync(p => p.Id == id);
         }
 
-        public Task<IEnumerable<Pedidos>> GetDailyOrdersAsync(DateTime fecha)
+        public async Task<IEnumerable<Pedidos>> GetDailyOrdersAsync(DateTime fecha)
         {
-            throw new NotImplementedException();
+            var inicio = fecha.Date;
+            var fin = inicio.AddDays(1);
+
+            return await _context.Pedidos
+                .Where(p => p.Fecha >= inicio && p.Fecha < fin)
+                .Include(p => p.Cliente)
+                .Include(p => p.DetallesPedido)
+                .ToListAsync();
         }
 
         public Task<int> CreateOrderWithDetailsAsync(Pedidos pedido, IEnumerable<DetallesPedido> detalles)
         {
-            throw new NotImplementedException();
+            // Alias del método principal
+            return CreateOrderAsync(pedido, detalles);
         }
     }
 }

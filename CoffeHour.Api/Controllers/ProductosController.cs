@@ -3,6 +3,7 @@ using CoffeeHour.Api.Responses;
 using CoffeHour.Core.DTOs;
 using CoffeHour.Core.Entities;
 using CoffeHour.Core.Interfaces;
+using CoffeHour.Core.QueryFilters;
 using CoffeHour.Infrastructure.DTOs;
 using Microsoft.AspNetCore.Mvc;
 
@@ -25,10 +26,38 @@ namespace CoffeHour.Api.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAll()
+        public IActionResult GetAll([FromQuery] ProductoQueryFilter filter)
         {
-            var productos = await _unitOfWork.Productos.GetAllAsync();
-            return Ok(new ApiResponse<IEnumerable<ProductoDTO>>(_mapper.Map<IEnumerable<ProductoDTO>>(productos)));
+            // ✅ Sin await - Query() devuelve IQueryable
+            var query = _unitOfWork.Productos.Query();
+
+            // Aplicar filtros...
+            if (!string.IsNullOrEmpty(filter.Categoria))
+                query = query.Where(p => p.Categoria == filter.Categoria);
+
+            if (!string.IsNullOrEmpty(filter.Estado))
+                query = query.Where(p => p.Estado == filter.Estado);
+
+            // Paginación
+            var total = query.Count();
+            var productos = query
+                .Skip((filter.PageNumber - 1) * filter.PageSize)
+                .Take(filter.PageSize)
+                .ToList();
+
+            var result = new
+            {
+                Data = _mapper.Map<IEnumerable<ProductoDTO>>(productos),
+                Pagination = new
+                {
+                    filter.PageNumber,
+                    filter.PageSize,
+                    TotalRecords = total,
+                    TotalPages = (int)Math.Ceiling((double)total / filter.PageSize)
+                }
+            };
+
+            return Ok(new ApiResponse<object>(result));
         }
 
         [HttpGet("{id:int}")]

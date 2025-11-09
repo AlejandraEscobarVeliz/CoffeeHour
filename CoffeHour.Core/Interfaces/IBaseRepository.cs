@@ -1,9 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿
 using System.Linq.Expressions;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace CoffeHour.Core.Interfaces
 {
@@ -12,12 +8,22 @@ namespace CoffeHour.Core.Interfaces
     /// </summary>
     public interface IBaseRepository<T> where T : class
     {
-        Task<IEnumerable<T>> GetAllAsync();
+        // ✅ Sin Task - método síncrono
+        IEnumerable<T> GetAll();
+
+        // ✅ Con Task - método asíncrono
         Task<T?> GetByIdAsync(int id);
+
+        // ✅ Con Task - método asíncrono
         Task AddAsync(T entity);
-        Task UpdateAsync(T entity);
+
+        // ✅ Sin Task - método síncrono (solo marca como modificado)
+        void Update(T entity);
+
+        // ✅ Con Task - método asíncrono
         Task DeleteAsync(int id);
+
+        // ✅ Para filtros avanzados
         IQueryable<T> Query(Expression<Func<T, bool>>? predicate = null);
     }
-
 }

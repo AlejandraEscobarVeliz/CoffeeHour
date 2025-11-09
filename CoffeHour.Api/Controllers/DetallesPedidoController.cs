@@ -20,11 +20,13 @@ namespace CoffeHour.Api.Controllers
             _mapper = mapper;
         }
 
-        [HttpGet]
-        public async Task<IActionResult> GetAll()
+         [HttpGet]
+        public IActionResult GetAll()
         {
-            var detalles = await _unitOfWork.Detalles.GetAllAsync();
-            return Ok(new ApiResponse<IEnumerable<DetallePedidoDTO>>(_mapper.Map<IEnumerable<DetallePedidoDTO>>(detalles)));
+            // ✅ Sin await
+            var detalles = _unitOfWork.Detalles.GetAll();
+            return Ok(new ApiResponse<IEnumerable<DetallePedidoDTO>>(
+                _mapper.Map<IEnumerable<DetallePedidoDTO>>(detalles)));
         }
 
         [HttpGet("{id:int}")]

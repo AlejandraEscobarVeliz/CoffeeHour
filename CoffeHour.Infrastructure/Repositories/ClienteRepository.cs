@@ -8,14 +8,11 @@ namespace CoffeHour.Infrastructure.Repositories
 {
     public class ClienteRepository : BaseRepository<Clientes>, IClienteRepository
     {
-        private readonly CoffeeHourContext _context;
+        //private readonly CoffeeHourContext _context;
 
-        public ClienteRepository(CoffeeHourContext context) : base(context)
-        {
-            _context = context;
-        }
+        public ClienteRepository(CoffeeHourContext context) : base(context) { }
 
-        public async Task<IEnumerable<Clientes>> GetAllAsync() =>
+        /*public async Task<IEnumerable<Clientes>> GetAllAsync() =>
             await _context.Clientes.ToListAsync();
 
         public async Task<Clientes?> GetByIdAsync(int id) =>
@@ -41,6 +38,19 @@ namespace CoffeHour.Infrastructure.Repositories
                 _context.Clientes.Remove(cliente);
                 await _context.SaveChangesAsync();
             }
+        }*/
+
+        public async Task<Clientes?> GetByEmailAsync(string email)
+        {
+            return await _entities
+                .FirstOrDefaultAsync(c => c.Email == email);
+        }
+
+        public async Task<IEnumerable<Clientes>> GetActiveClientsAsync()
+        {
+            return await _entities
+                .Where(c => c.FechaRegistro >= DateTime.Now.AddYears(-1))
+                .ToListAsync();
         }
     }
 }

@@ -15,11 +15,13 @@ namespace CoffeHour.Infrastructure.Data
     {
         public CoffeeHourContext()
         {
+
         }
 
         public CoffeeHourContext(DbContextOptions<CoffeeHourContext> options)
             : base(options)
         {
+
         }
 
         public virtual DbSet<Clientes> Clientes { get; set; }

@@ -31,10 +31,12 @@ namespace CoffeHour.Api.Controllers
         /// <summary>
         /// Obtiene todos los clientes con soporte de paginación y búsqueda.
         /// </summary>
+        // CoffeHour.Api/Controllers/ClientesController.cs
         [HttpGet]
-        public async Task<IActionResult> GetAll([FromQuery] QueryFilter filter)
+        public IActionResult GetAll([FromQuery] QueryFilter filter)
         {
-            var clientes = await _unitOfWork.Clientes.GetAllAsync();
+            // ✅ Sin await - GetAll() es síncrono
+            var clientes = _unitOfWork.Clientes.GetAll();
 
             if (!string.IsNullOrWhiteSpace(filter.SearchTerm))
                 clientes = clientes.Where(c => c.Nombre.Contains(filter.SearchTerm, StringComparison.OrdinalIgnoreCase));

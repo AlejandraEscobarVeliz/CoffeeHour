@@ -1,4 +1,5 @@
-﻿using CoffeHour.Core.Interfaces;
+﻿// CoffeHour.Infrastructure/Repositories/BaseRepository.cs
+using CoffeHour.Core.Interfaces;
 using CoffeHour.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
@@ -7,6 +8,7 @@ namespace CoffeHour.Infrastructure.Repositories
 {
     /// <summary>
     /// Implementación genérica del patrón Repositorio.
+    /// No guarda cambios, solo registra operaciones en el contexto.
     /// </summary>
     public class BaseRepository<T> : IBaseRepository<T> where T : class
     {
@@ -19,15 +21,23 @@ namespace CoffeHour.Infrastructure.Repositories
             _entities = context.Set<T>();
         }
 
-        public async Task<IEnumerable<T>> GetAllAsync() 
-            => await _entities.ToListAsync();
+        // ✅ Método síncrono - devuelve IEnumerable
+        public IEnumerable<T> GetAll()
+            => _entities.AsEnumerable();
 
-        public async Task<T?> GetByIdAsync(int id) => await _entities.FindAsync(id);
+        // ✅ Método asíncrono
+        public async Task<T?> GetByIdAsync(int id)
+            => await _entities.FindAsync(id);
 
-        public async Task AddAsync(T entity) => await _entities.AddAsync(entity);
+        // ✅ Método asíncrono
+        public async Task AddAsync(T entity)
+            => await _entities.AddAsync(entity);
 
-        public async Task UpdateAsync(T entity) => _entities.Update(entity);
+        // ✅ Método síncrono - solo marca como modificado
+        public void Update(T entity)
+            => _entities.Update(entity);
 
+        // ✅ Método asíncrono
         public async Task DeleteAsync(int id)
         {
             var entity = await GetByIdAsync(id);
@@ -35,10 +45,10 @@ namespace CoffeHour.Infrastructure.Repositories
                 _entities.Remove(entity);
         }
 
+        // ✅ Para filtros - devuelve IQueryable
         public IQueryable<T> Query(Expression<Func<T, bool>>? predicate = null)
         {
             return predicate != null ? _entities.Where(predicate) : _entities;
         }
     }
-
 }

@@ -9,7 +9,8 @@ namespace CoffeHour.Core.Interfaces
 {
     public interface IProductoRepository : IBaseRepository<Productos>
     {
-        IEnumerable<object> GetAllQueryable();
+        //IEnumerable<object> GetAllQueryable();
+        Task<IEnumerable<Productos>> GetAllDapperAsync();
         Task<IEnumerable<Productos>> GetFilteredAsync(string? categoria, string? estado);
     
     /* Task<IEnumerable<Productos>> GetAllAsync();
