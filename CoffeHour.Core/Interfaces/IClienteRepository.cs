@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace CoffeHour.Core.Interfaces
 {
-    public interface IClienteRepository
+    public interface IClienteRepository : IBaseRepository<Clientes>
     {
         Task<IEnumerable<Clientes>> GetAllAsync();
         Task<Clientes?> GetByIdAsync(int id);

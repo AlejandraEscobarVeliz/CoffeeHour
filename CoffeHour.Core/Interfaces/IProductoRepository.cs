@@ -7,12 +7,15 @@ using System.Threading.Tasks;
 
 namespace CoffeHour.Core.Interfaces
 {
-    public interface IProductoRepository
+    public interface IProductoRepository : IBaseRepository<Productos>
     {
-        Task<IEnumerable<Productos>> GetAllAsync();
-        Task<Productos?> GetByIdAsync(int id);
-        Task AddAsync(Productos producto);
-        Task UpdateAsync(Productos producto);
-        Task DeleteAsync(int id);
-    }
+        IEnumerable<object> GetAllQueryable();
+        Task<IEnumerable<Productos>> GetFilteredAsync(string? categoria, string? estado);
+    
+    /* Task<IEnumerable<Productos>> GetAllAsync();
+     Task<Productos?> GetByIdAsync(int id);
+     Task AddAsync(Productos producto);
+     Task UpdateAsync(Productos producto);
+     Task DeleteAsync(int id);*/
+}
 }

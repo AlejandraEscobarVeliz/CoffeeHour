@@ -6,8 +6,14 @@ using CoffeHour.Core.DTOs;
 
 namespace CoffeHour.Core.Interfaces
 {
-    public interface IPedidoRepository
+    public interface IPedidoRepository: IBaseRepository<Pedidos>
+
     {
+        Task<Pedidos?> GetByIdWithDetailsAsync(int id);
+        Task<IEnumerable<Pedidos>> GetDailyOrdersAsync(DateTime fecha);
+        Task<int> CreateOrderWithDetailsAsync(Pedidos pedido, IEnumerable<DetallesPedido> detalles);
+
+
         Task<IEnumerable<Pedidos>> GetAllAsync();
         Task<Pedidos?> GetByIdAsync(int id);
         Task AddAsync(Pedidos pedido);

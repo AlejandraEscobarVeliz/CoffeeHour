@@ -13,6 +13,8 @@ namespace CoffeHour.Infrastructure.Mappings
             CreateMap<Productos, ProductoDTO>().ReverseMap();
             CreateMap<Pedidos, PedidoDTO>().ReverseMap();
             CreateMap<DetallesPedido, DetallePedidoDTO>().ReverseMap();
+           
+            //////
             CreateMap<ChangeStatusDTO, Pedidos>().ForMember(d => d.Estado, o => o.MapFrom(s => s.NuevoEstado));
             CreateMap<SalesReportDTO, SalesReportDTO>();
         }

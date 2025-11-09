@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -7,9 +9,12 @@ using System.Xml.Linq;
 
 namespace CoffeHour.Core.Entities
 {
-    public partial class Clientes
+    public partial class Clientes: BaseEntity
     {
-        public int IdCliente { get; set; }
+        //public int IdCliente { get; set; }
+        [Key]
+        [Column("IdCliente")] 
+        public new int Id { get; set; }
         public string Nombre { get; set; } = null!;
         public string? Email { get; set; }
         public string? Telefono { get; set; }

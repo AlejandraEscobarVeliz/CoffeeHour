@@ -13,7 +13,7 @@ namespace CoffeHour.Infrastructure.Data.Configuration
     {
         public void Configure(EntityTypeBuilder<Clientes> builder)
         {
-            builder.HasKey(e => e.IdCliente).HasName("PK_Cliente");
+            builder.HasKey(e => e.Id).HasName("PK_Cliente");
 
             builder.ToTable("Clientes");
 

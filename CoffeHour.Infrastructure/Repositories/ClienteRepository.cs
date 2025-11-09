@@ -2,19 +2,15 @@
 using CoffeHour.Core.Interfaces;
 using CoffeHour.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Microsoft.Extensions.Hosting;
 
 namespace CoffeHour.Infrastructure.Repositories
 {
-    public class ClienteRepository : IClienteRepository
+    public class ClienteRepository : BaseRepository<Clientes>, IClienteRepository
     {
         private readonly CoffeeHourContext _context;
 
-        public ClienteRepository(CoffeeHourContext context)
+        public ClienteRepository(CoffeeHourContext context) : base(context)
         {
             _context = context;
         }

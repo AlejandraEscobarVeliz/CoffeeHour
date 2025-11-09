@@ -1,50 +1,47 @@
 ﻿using CoffeHour.Core.Entities;
 using CoffeHour.Core.Interfaces;
 using CoffeHour.Infrastructure.Data;
+using Dapper;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace CoffeHour.Infrastructure.Repositories
 {
-    public class ProductoRepository : IProductoRepository
+    public class ProductoRepository : BaseRepository<Productos>, IProductoRepository
     {
+    
+        private readonly DapperContext _dapper;
         private readonly CoffeeHourContext _context;
 
-        public ProductoRepository(CoffeeHourContext context)
+        public ProductoRepository(CoffeeHourContext context, DapperContext dapper) : base(context)
         {
             _context = context;
+            _dapper = dapper;
         }
 
-        public async Task<IEnumerable<Productos>> GetAllAsync() =>
-            await _context.Productos.ToListAsync();
-
-        public async Task<Productos?> GetByIdAsync(int id) =>
-            await _context.Productos.FindAsync(id);
-
-        public async Task AddAsync(Productos producto)
+        public async Task<IEnumerable<Productos>> GetAllDapperAsync()
         {
-            _context.Productos.Add(producto);
-            await _context.SaveChangesAsync();
+            var sql = "SELECT * FROM Productos";
+            var productos = await _dapper.QueryAsync<Productos>(sql);
+            return productos;
         }
 
-        public async Task UpdateAsync(Productos producto)
+        public IEnumerable<object> GetAllQueryable()
         {
-            _context.Productos.Update(producto);
-            await _context.SaveChangesAsync();
+            throw new NotImplementedException();
         }
 
-        public async Task DeleteAsync(int id)
+        public async Task<IEnumerable<Productos>> GetFilteredAsync(string? categoria, string? estado)
         {
-            var producto = await _context.Productos.FindAsync(id);
-            if (producto != null)
-            {
-                _context.Productos.Remove(producto);
-                await _context.SaveChangesAsync();
-            }
+            var query = _context.Productos.AsQueryable();
+
+            if (!string.IsNullOrEmpty(categoria))
+                query = query.Where(p => p.Categoria == categoria);
+
+            if (!string.IsNullOrEmpty(estado))
+                query = query.Where(p => p.Estado == estado);
+
+            return await query.ToListAsync();
         }
     }
 }
+

@@ -1,24 +1,25 @@
-﻿using CoffeHour.Core.Entities;
+﻿using CoffeHour.Core.DTOs;
+using CoffeHour.Core.Entities;
+using CoffeHour.Infrastructure.DTOs;
 using FluentValidation;
 
 namespace CoffeHour.Infrastructure.Validators
 {
-    public class ClienteValidator : AbstractValidator<Clientes>
+    public class ClienteValidator : AbstractValidator<ClienteDTO>
     {
         public ClienteValidator()
         {
-            RuleFor(c => c.Nombre)
+            RuleFor(x => x.Nombre)
                 .NotEmpty().WithMessage("El nombre del cliente es obligatorio.");
 
-            RuleFor(c => c.Email)
-                .NotEmpty().WithMessage("El correo electrónico es obligatorio.")
-                .EmailAddress().WithMessage("El formato del correo no es válido.");
+            RuleFor(x => x.Email)
+                .NotEmpty().EmailAddress().WithMessage("El formato del correo no es válido.");
 
-            RuleFor(c => c.Telefono)
-                .Matches(@"^\d+$").WithMessage("El teléfono solo puede contener números.")
-                .When(c => !string.IsNullOrEmpty(c.Telefono));
+            RuleFor(x => x.Telefono)
+                .Matches(@"^[0-9]+$").WithMessage("El teléfono solo puede contener números.");
         }
     }
 }
+
 
 

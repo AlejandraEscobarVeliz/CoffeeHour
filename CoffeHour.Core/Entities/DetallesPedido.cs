@@ -1,15 +1,25 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace CoffeHour.Core.Entities
 {
-    public partial class DetallesPedido
+    public partial class DetallesPedido: BaseEntity
     {
-        public int IdDetalle { get; set; }
+        [Key]
+        [Column("IdDetalle")] 
+        public new int Id { get; set; }
+
+        [Required]
+        [Column("IdPedido")]
         public int IdPedido { get; set; }
+
+        [Required]
+        [Column("IdProducto")]
         public int IdProducto { get; set; }
         public int Cantidad { get; set; }
         public decimal Subtotal { get; set; }

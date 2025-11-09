@@ -2,19 +2,16 @@
 using CoffeHour.Core.Interfaces;
 using CoffeHour.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+
 
 namespace CoffeHour.Infrastructure.Repositories
 {
-    public class DetallePedidoRepository : IDetallePedidoRepository
+    public class DetallePedidoRepository : BaseRepository<DetallesPedido>, IDetallePedidoRepository
     {
+    
         private readonly CoffeeHourContext _context;
 
-        public DetallePedidoRepository(CoffeeHourContext context)
+        public DetallePedidoRepository(CoffeeHourContext context) : base(context) 
         {
             _context = context;
         }
@@ -29,7 +26,7 @@ namespace CoffeHour.Infrastructure.Repositories
             await _context.DetallesPedido
                 .Include(d => d.Producto)
                 .Include(d => d.Pedido)
-                .FirstOrDefaultAsync(d => d.IdDetalle == id);
+                .FirstOrDefaultAsync(d => d.Id == id);
 
         public async Task AddAsync(DetallesPedido detalle)
         {

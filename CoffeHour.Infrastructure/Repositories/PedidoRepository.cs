@@ -6,40 +6,40 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CoffeHour.Infrastructure.Repositories
 {
-    public class PedidoRepository : IPedidoRepository
+    public class PedidoRepository :BaseRepository<Pedidos>, IPedidoRepository
     {
-        private readonly CoffeeHourContext _ctx;
-        public PedidoRepository(CoffeeHourContext ctx) => _ctx = ctx;
+        private readonly CoffeeHourContext _context;
+        public PedidoRepository(CoffeeHourContext context) : base(context) { }
 
         public async Task<IEnumerable<Pedidos>> GetAllAsync() =>
-            await _ctx.Pedidos.Include(p => p.Cliente)
+            await _context.Pedidos.Include(p => p.Cliente)
                                .Include(p => p.DetallesPedido).ThenInclude(d => d.Producto)
                                .ToListAsync();
 
         public async Task<Pedidos?> GetByIdAsync(int id) =>
-            await _ctx.Pedidos.Include(p => p.Cliente)
+            await _context.Pedidos.Include(p => p.Cliente)
                               .Include(p => p.DetallesPedido).ThenInclude(d => d.Producto)
-                              .FirstOrDefaultAsync(p => p.IdPedido == id);
+                              .FirstOrDefaultAsync(p => p.Id == id);
 
         public async Task AddAsync(Pedidos pedido)
         {
-            _ctx.Pedidos.Add(pedido);
-            await _ctx.SaveChangesAsync();
+            _context.Pedidos.Add(pedido);
+            await _context.SaveChangesAsync();
         }
 
         public async Task UpdateAsync(Pedidos pedido)
         {
-            _ctx.Pedidos.Update(pedido);
-            await _ctx.SaveChangesAsync();
+            _context.Pedidos.Update(pedido);
+            await _context.SaveChangesAsync();
         }
 
         public async Task DeleteAsync(int id)
         {
-            var entity = await _ctx.Pedidos.FindAsync(id);
+            var entity = await _context.Pedidos.FindAsync(id);
             if (entity != null)
             {
-                _ctx.Pedidos.Remove(entity);
-                await _ctx.SaveChangesAsync();
+                _context.Pedidos.Remove(entity);
+                await _context.SaveChangesAsync();
             }
         }
 
@@ -52,7 +52,7 @@ namespace CoffeHour.Infrastructure.Repositories
             // Recalcular subtotales a partir de precio actual
             foreach (var det in detallesList)
             {
-                var producto = await _ctx.Productos.FindAsync(det.IdProducto);
+                var producto = await _context.Productos.FindAsync(det.IdProducto);
                 if (producto == null) throw new InvalidOperationException($"Producto {det.IdProducto} no existe.");
                 if (det.Cantidad <= 0) throw new InvalidOperationException("Cantidad debe ser > 0.");
                 det.Subtotal = producto.Precio * det.Cantidad;
@@ -64,13 +64,13 @@ namespace CoffeHour.Infrastructure.Repositories
             pedido.DetallesPedido = detallesList;
 
             // Guardar en transacción
-            using var tran = await _ctx.Database.BeginTransactionAsync();
+            using var tran = await _context.Database.BeginTransactionAsync();
             try
             {
-                _ctx.Pedidos.Add(pedido);
-                await _ctx.SaveChangesAsync();
+                _context.Pedidos.Add(pedido);
+                await _context.SaveChangesAsync();
                 await tran.CommitAsync();
-                return pedido.IdPedido;
+                return pedido.Id;
             }
             catch
             {
@@ -81,7 +81,7 @@ namespace CoffeHour.Infrastructure.Repositories
 
         public async Task<bool> ChangeOrderStatusAsync(int idPedido, string nuevoEstado)
         {
-            var pedido = await _ctx.Pedidos.FindAsync(idPedido);
+            var pedido = await _context.Pedidos.FindAsync(idPedido);
             if (pedido == null) return false;
 
             var transiciones = new Dictionary<string, string[]>
@@ -97,7 +97,7 @@ namespace CoffeHour.Infrastructure.Repositories
                 throw new InvalidOperationException($"No se puede cambiar de {actual} a {nuevoEstado}.");
 
             pedido.Estado = nuevoEstado;
-            await _ctx.SaveChangesAsync();
+            await _context.SaveChangesAsync();
             return true;
         }
 
@@ -106,7 +106,7 @@ namespace CoffeHour.Infrastructure.Repositories
             var inicio = fecha.Date;
             var fin = inicio.AddDays(1);
 
-            var pedidos = await _ctx.Pedidos
+            var pedidos = await _context.Pedidos
                 .Where(p => p.Fecha >= inicio && p.Fecha < fin && p.Estado == "Entregado")
                 .ToListAsync();
 
@@ -116,6 +116,21 @@ namespace CoffeHour.Infrastructure.Repositories
                 OrdersCount = pedidos.Count,
                 TotalSales = pedidos.Sum(p => p.Total)
             };
+        }
+
+        public Task<Pedidos?> GetByIdWithDetailsAsync(int id)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<IEnumerable<Pedidos>> GetDailyOrdersAsync(DateTime fecha)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<int> CreateOrderWithDetailsAsync(Pedidos pedido, IEnumerable<DetallesPedido> detalles)
+        {
+            throw new NotImplementedException();
         }
     }
 }
